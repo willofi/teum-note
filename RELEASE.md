@@ -4,7 +4,7 @@ macOS 화면 가장자리에 메모를 꽂아두고, 메뉴 막대와 단축키�
 
 ## 다운로드
 
-`Teum-0.1.0-macos-arm64-preview.zip`은 Apple Silicon Mac과 macOS 14 이상용입니다. 압축을 풀고 `Teum.app`을 응용 프로그램 폴더로 옮긴 뒤 Finder나 Spotlight에서 **틈**을 실행하세요. 실행 중에는 메뉴 막대에 아이콘이 나타납니다.
+`Teum-0.1.0-preview.1-macos-arm64.zip`은 Apple Silicon Mac과 macOS 14 이상용입니다. 압축을 풀고 `Teum.app`을 응용 프로그램 폴더로 옮긴 뒤 Finder나 Spotlight에서 **틈**을 실행하세요. 실행 중에는 메뉴 막대에 아이콘이 나타납니다.
 
 이 파일은 개발용 임시 서명으로 만들어졌으며 Apple 공증을 거치지 않았습니다. 다른 Mac에서는 macOS 보안 확인 때문에 실행이 제한될 수 있습니다. 일반 공개 배포용으로 사용하려면 Developer ID 서명과 공증을 마친 앱으로 파일을 교체해야 합니다.
 
