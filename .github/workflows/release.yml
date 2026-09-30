@@ -24,7 +24,7 @@ jobs:
       - name: Check app
         run: swift test --disable-sandbox
       - name: Build app
-        run: ./scripts/build-app.sh
+        run: bash scripts/build-app.sh
       - name: Verify app
         run: |
           test "$(lipo -archs dist/Teum.app/Contents/MacOS/Teum)" = arm64
