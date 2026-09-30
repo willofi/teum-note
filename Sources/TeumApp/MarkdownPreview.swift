@@ -19,7 +19,6 @@ struct MarkdownPreview: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 6)
             .padding(.horizontal, 5)
-            .textSelection(.enabled)
         }
         .accessibilityLabel("마크다운 미리보기")
         .tint(Color(red: 0.22, green: 0.39, blue: 0.36))

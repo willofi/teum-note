@@ -127,7 +127,9 @@ struct NoteEditorView: View {
                 Group {
                     if preview {
                         MarkdownPreview(source: note.text)
-                            .onTapGesture(count: 2) { preview = false }
+                            .contentShape(Rectangle())
+                            .onTapGesture { preview = false }
+                            .help("클릭해서 편집")
                     } else {
                         editor(for: note)
                     }

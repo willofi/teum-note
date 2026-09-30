@@ -54,11 +54,20 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuItemValidation
                 case kVK_ANSI_N: self?.addNote(); return nil
                 case kVK_ANSI_W: self?.deleteCurrentNote(); return nil
                 case kVK_ANSI_Z: self?.undoAction(nil); return nil
+                case kVK_ANSI_B: if self?.applyFormatting(.bold) == true { return nil }
+                case kVK_ANSI_I: if self?.applyFormatting(.italic) == true { return nil }
+                case kVK_ANSI_E: if self?.applyFormatting(.code) == true { return nil }
+                case kVK_ANSI_K: if self?.applyFormatting(.link) == true { return nil }
                 default: break
                 }
-            } else if modifiers == [.command, .shift], event.keyCode == kVK_ANSI_Z {
-                self?.redoAction(nil)
-                return nil
+            } else if modifiers == [.command, .shift] {
+                switch Int(event.keyCode) {
+                case kVK_ANSI_Z: self?.redoAction(nil); return nil
+                case kVK_ANSI_X: if self?.applyFormatting(.strikethrough) == true { return nil }
+                case kVK_ANSI_7: if self?.applyFormatting(.numberedList) == true { return nil }
+                case kVK_ANSI_8: if self?.applyFormatting(.bulletList) == true { return nil }
+                default: break
+                }
             }
             if event.keyCode == 53, self?.editor.isVisible == true,
                self?.activeTextEditor?.hasMarkedText() != true {
@@ -123,6 +132,11 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuItemValidation
         addItem("현재 메모 삭제", action: #selector(deleteCurrentNote), key: "w", to: menu)
         addItem("실행 취소", action: #selector(undoAction(_:)), key: "z", to: menu)
         addItem("다시 실행", action: #selector(redoAction(_:)), to: menu)
+        let formatItem = NSMenuItem(title: "서식", action: nil, keyEquivalent: "")
+        let formatMenu = NSMenu(title: "서식")
+        addFormattingItems(to: formatMenu)
+        formatItem.submenu = formatMenu
+        menu.addItem(formatItem)
         addItem("가장자리 탭 숨기기 / 보이기", action: #selector(toggleRail), to: menu)
         menu.addItem(.separator())
         addItem("왼쪽에 꽂기", action: #selector(moveLeft), to: menu)
@@ -159,6 +173,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuItemValidation
             item.representedObject = action
             item.target = self
         }
+        editMenu.addItem(.separator())
+        addFormattingItems(to: editMenu)
         editItem.submenu = editMenu
         main.addItem(editItem)
         NSApp.mainMenu = main
@@ -180,6 +196,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuItemValidation
 
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
         if item.action == #selector(deleteCurrentNote) { return editor?.isVisible == true && store.selectedNote != nil }
+        if item.action == #selector(formatCurrentNote(_:)) {
+            return activeTextEditor.map { !$0.hasMarkedText() } ?? false
+        }
         if item.action == #selector(undoAction(_:)) {
             return store.canUndoListChange || activeTextEditor?.undoManager?.canUndo == true
         }
@@ -206,6 +225,40 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuItemValidation
         case "selectAll:": textView.selectAll(nil)
         default: break
         }
+    }
+
+    private func addFormattingItems(to menu: NSMenu) {
+        let items: [(String, MarkdownFormatting.Style, String, NSEvent.ModifierFlags)] = [
+            ("굵게", .bold, "b", [.command]),
+            ("기울임", .italic, "i", [.command]),
+            ("취소선", .strikethrough, "x", [.command, .shift]),
+            ("인라인 코드", .code, "e", [.command]),
+            ("링크", .link, "k", [.command]),
+            ("번호 목록", .numberedList, "7", [.command, .shift]),
+            ("글머리 목록", .bulletList, "8", [.command, .shift])
+        ]
+        for (title, style, key, modifiers) in items {
+            let item = menu.addItem(withTitle: title, action: #selector(formatCurrentNote(_:)), keyEquivalent: key)
+            item.keyEquivalentModifierMask = modifiers
+            item.representedObject = style.rawValue
+            item.target = self
+        }
+    }
+
+    @objc private func formatCurrentNote(_ item: NSMenuItem) {
+        guard let rawValue = item.representedObject as? String,
+              let style = MarkdownFormatting.Style(rawValue: rawValue) else { return }
+        _ = applyFormatting(style)
+    }
+
+    @discardableResult private func applyFormatting(_ style: MarkdownFormatting.Style) -> Bool {
+        guard let textView = activeTextEditor, !textView.hasMarkedText(),
+              let change = MarkdownFormatting.edit(style, in: textView.string, selection: textView.selectedRange()) else { return false }
+        editor.makeKeyAndOrderFront(nil)
+        editor.makeFirstResponder(textView)
+        textView.insertText(change.replacement, replacementRange: change.range)
+        textView.setSelectedRange(change.selection)
+        return true
     }
 
     private func addItem(_ title: String, action: Selector, key: String = "", to menu: NSMenu) {
